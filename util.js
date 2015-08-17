@@ -54,23 +54,80 @@ var width = function (mtx) {
 };
 
 var add = function (a, b) {
-	console.log(a, b);
 	return a + b;
 };
 
-var Matrix = {
-	multiply: _.compose(_.partial(_.map, _, function (m, i) {
-	}), Array)
+var multiply = function (a, b) {
+	return a * b;
 };
 
-var test = [1,2,3];
-var test2 = [3,3,3];
+var sum = _.partial(_.foldl, _, add, 0);
+
+/**
+ * Maps each entry in an array
+ * to a sum of its constituents,
+ * where each entry is an array.
+ *
+ * i.e. [
+ *		[1,2,3],
+ *		[2,2,2]
+ * ]
+ *
+ * into 
+ *
+ * [
+ *		6,
+ *		6
+ * ]
+ *
+ * @param array a Array to be mapped to its constituents' sums.
+ * @return array New array with entries of the old array's constituents' sums.
+ */
+var mapSum = _.partial(_.map, _, sum);
+
+var test = [[1,2,3], [5,5,5]];
+var test2 = [[3,3,3], [2,2,2], [1,1,1]];
 
 var merge = function (arr, arr2, fn) {
 	return _.map(arr, function (a, i) {
 		var b = arr2[i];
 		return _.bind(fn, this, a, b)();
 	}.bind(this));
+};
+
+/**
+ * Merge arrays by multiplication.
+ *
+ * @param array a Array to be merged with another.
+ * @param array b Array to be merged with another.
+ * @return array New array where its entries are the products of multiplication for each entry of the source arrays.
+ */
+var mergeByMult = _.partial(merge, _, _, multiply);
+
+var Matrix = {
+	columns: _.partial(_.unzip, _),
+	/**
+	 * Multiplies the given row 
+	 * of a matrix by each column 
+	 * of another given matrix.
+	 *
+	 * @param array a An array representing values of one row of a matrix.
+	 * @param array b An array representing an entire matrix with arrays as rows of its values.
+	 * @return array A new array representing a matrix as the product of the multiplication.
+	 */
+	multRbyCs: function (a, b) {
+		return _.map(Matrix.columns(b), _.partial(mergeByMult, a, _));
+	},
+	/**
+	 * Multiplies two matrixes.
+	 *
+	 * @param array a An array representing an entire matrix, where arrays are rows of values.
+	 * @param array b An array representing an entire matrix, where arrays are rows of values.
+	 * @return array A new array representing a matrix as the product of the multiplication of the other two.
+	 */
+	multiply: function (a, b) {
+		return _.map(a, _.compose(mapSum, _.partial(Matrix.multRbyCs, _, b)));
+	}
 };
 
 var move = function (mtx, entity) {
