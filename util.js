@@ -7,18 +7,25 @@
  * @param array array Array to be cloned.
  * @return array New array of cloned array.
  */
-var cloneArray = function (array) {
+var cloneArray = R.curry(function (array) {
 	return [].concat(array);
-};
+});
+
+/**
+ * Get current time in milliseconds 
+ * since the year 1970, 1 January, 00:00:00 AM UTC
+ * @return number Current time in milliseconds
+ */
+var now = Date.now;
 
 /**
  * Reverse given array.
  * @param array array Array to be reversed.
  * @return array Reversed array.
  */
-var reverse = function (array) {
+var reverse = R.curry(function (array) {
 	return array.reverse();
-};
+});
 
 /**
  * Flip the order the arguments are
@@ -27,23 +34,30 @@ var reverse = function (array) {
  * @param function fn Function for which arguments should be reversed
  * @return function New Function with reversed arguments.
  */
-var flip = function (fn) {
+var flip = R.curry(function (fn) {
 
 	return function () {
 
-		var args = reverse(_.toArray(arguments));
+		var args = reverse(toArray(arguments));
 
 		return fn.apply(null, args);
 	};
-};
+});
 
-var y = function (mtx) {
+/**
+ * 
+ */
+var unzip = R.map(Array);
+
+console.log(unzip);
+
+var y = R.curry(function (mtx) {
 	return mtx[0][1];
-};
+});
 
-var x = function (mtx) {
+var x = R.curry(function (mtx) {
 	return mtx[0][0];
-};
+});
 
 /**
  * Returns the calculated y
@@ -52,9 +66,9 @@ var x = function (mtx) {
  * @param array mtx An array representing a matrix ( see Matrix function below )
  * @return number The y-displacement of the given 2d matrix.
  */
-var height = function (mtx) {
+var height = R.curry(function (mtx) {
 	return mtx[1][1] - mtx[0][1];
-};
+});
 
 /**
  * Returns the calculated 
@@ -63,20 +77,20 @@ var height = function (mtx) {
  * @param array mtx An array representing a matrix (see Matrix funciton below)
  * @return number The x-displacement of the given 2d matrix.
  */
-var width = function (mtx) {
+var width = R.curry(function (mtx) {
 	return mtx[1][0] - mtx[0][0];
-};
+});
 
-var add = function (a, b) {
+var add = R.curry(function (b, a) {
 	return a + b;
-};
+});
 
-var multiply = function (a, b) {
+var multiply = R.curry(function (b, a) {
 	return a * b;
-};
+});
 
-var increment = incr = _.partial(add, _, 1);
-var sum = _.partial(_.foldl, _, add, 0);
+var increment = incr = add(1);
+var sum = R.reduce(add, 1);
 
 /**
  * Generates an array of
@@ -86,7 +100,7 @@ var sum = _.partial(_.foldl, _, add, 0);
  * @param number n The length of array.
  * @return array New array consisting of 'n' entries.
  */
-var numbers = _.compose(_.partial(_.range, 1, _), _.partial(incr));
+var numbers = R.compose(R.range(1), incr);
 
 /**
  * Maps each entry in an array
@@ -108,7 +122,7 @@ var numbers = _.compose(_.partial(_.range, 1, _), _.partial(incr));
  * @param array a Array to be mapped to its constituents' sums.
  * @return array New array with entries of the old array's constituents' sums.
  */
-var mapSum = _.partial(_.map, _, sum);
+var mapSum = R.map(sum);
 
 var test = [[1,2,3], [5,5,5]];
 var test2 = [[3,3,3], [2,2,2], [1,1,1]];
@@ -132,12 +146,12 @@ var test2 = [[3,3,3], [2,2,2], [1,1,1]];
  * @param function fn A function with which to merge the arrays.
  * @return array The product of the merged arrays.
  */
-var merge = function (arr, arr2, fn) {
-	return _.map(arr, function (a, i) {
+var merge = R.curry(function (arr, arr2, fn) {
+	return R.map(R.bind(this, function (a, i) {
 		var b = arr2[i];
-		return _.bind(fn, this, a, b)();
-	}.bind(this));
-};
+		return fn(b, a);
+	}), arr);
+});
 
 /**
  * Merge arrays by multiplication.
@@ -146,7 +160,7 @@ var merge = function (arr, arr2, fn) {
  * @param array b Array to be merged with another.
  * @return array New array where its entries are the products of multiplication for each entry of the source arrays.
  */
-var mergeByMult = _.partial(merge, _, _, multiply);
+var mergeByMult = merge(multiply);
 
 /**
  * Converts arguments into
@@ -158,14 +172,14 @@ var mergeByMult = _.partial(merge, _, _, multiply);
  * @param array row A row of the matrix.
  * @return array A new matrix, where each entry is an array representing a row of the matrix.
  */
-var Matrix = _.partial(_.toArray);
+var Matrix = Array;
 
-Matrix.I = function (n) {
-	return _.map(numbers(n), function (v, i) {
+Matrix.I = R.curry(function (n) {
+	return R.map(function (v, i) {
 		console.log(v);
 		return (v == v);
-	});
-};
+	}, numbers(n));
+});
 
 /**
  * Converts the matrix 
@@ -175,7 +189,7 @@ Matrix.I = function (n) {
  * @param array array A matrix.
  * @return array An array of columns.
  */
-Matrix.columns = _.partial(_.unzip, _);
+Matrix.columns = unzip;
 
 /**
  * Multiplies the given row 
@@ -186,9 +200,9 @@ Matrix.columns = _.partial(_.unzip, _);
  * @param array b An array representing an entire matrix with arrays as rows of its values.
  * @return array A new array representing a matrix as the product of the multiplication.
  */
-Matrix.multRbyCs = function (a, b) {
-	return _.map(Matrix.columns(b), _.partial(mergeByMult, a, _));
-};
+Matrix.multRowbyCols = R.curry(function (b, a) {
+	return R.map(mergeByMult(a), Matrix.columns(b));
+});
 
 /**
  * Multiplies two matrixes.
@@ -197,15 +211,15 @@ Matrix.multRbyCs = function (a, b) {
  * @param array b An array representing an entire matrix, where arrays are rows of values.
  * @return array A new array representing a matrix as the product of the multiplication of the other two.
  */
-Matrix.multiply = function (a, b) {
-	return _.map(a, _.compose(mapSum, _.partial(Matrix.multRbyCs, _, b)));
-};
+Matrix.multiply = R.curry(function (b, a) {
+	return R.map(R.compose(mapSum, Matrix.multRbyCs(b)), a);
+});
 
 
-var move = function (mtx, entity) {
+var move = R.curry(function (mtx, entity) {
 	var ent = cloneArray(entity);
 	return ent;
-};
+});
 
 /**
  * Converts entity into 
@@ -214,7 +228,7 @@ var move = function (mtx, entity) {
  * @param object ent Entity object holding entity data.
  * @return object New object with entity's data in a drawable format.
  */
-var drawable = function (ent) {
+var drawable = R.curry(function (ent) {
 	var mtx = ent.pos;
 	return {
 		x: x(mtx),
@@ -228,7 +242,7 @@ var drawable = function (ent) {
 		color: ent.color,
 		image: ent.image,
 	};
-};
+});
 
 /**
  * A list of impure functions
@@ -244,7 +258,7 @@ var Impure = {
 	 * @param object data Object of data to draw.
 	 * @param element canvas Canvas element on which to draw.
 	 */
-	draw: function (shape, fill, canvas, data) {
+	draw: R.curry(function (shape, fill, canvas, data) {
 
 		var ctx = canvas.getContext('2d');
 		var x = data.x;
@@ -271,18 +285,18 @@ var Impure = {
 
 			ctx.stroke();
 		}
-	},
+	}),
 	/**
 	 * Draws all the entities on the HTML canvas.
 	 */
-	graphics: function (canvas, entities) {
+	graphics: R.curry(function (canvas, entities) {
 
 		// CONVERT ENTITIES INTO DRAWABLE DATA
-		var data = _.map(entities, drawable);
+		var data = R.map(drawable, entities);
 
 		// DRAW EACH DATA
-		_.each(data, _.partial(Impure.drawImageRectangle, canvas));
-	},
+		R.forEach(Impure.drawImageRectangle(canvas), data);
+	}),
 	/**
 	 * Handles the logic of the game entities.
 	 *
@@ -290,7 +304,7 @@ var Impure = {
 	 * @param array entities An array of entity data objects.
 	 * @return mixed False if the game should abort, an array of altered entities if it should continue.
 	 */
-	logic: function (canvas, entities) {
+	logic: R.curry(function (canvas, entities) {
 
 		// STOP GAME ON ESC PRESS
 		if (KEY.isDown(27)) 
@@ -298,13 +312,13 @@ var Impure = {
 
 
 		var ents = cloneArray(entities);
-		var player = _.findWhere(ents, {id: "player"});
+		var player = R.find(R.propEq('id', 'player'), ents);
 
 		if (KEY.isDown(68)) 
 			player = move(player);
 
 		return ents;
-	},
+	}),
 	/**
 	 * Ends game if bool is false.
 	 *
@@ -312,10 +326,10 @@ var Impure = {
 	 * @param boolean bool The boolean for which to test.
 	 * @return undefined
 	 */
-	abort: function (interval, bool) {
+	abort: R.curry(function (interval, bool) {
 		if (bool === false)
 			clearInterval(interval);
-	},
+	}),
 	/**
 	 * Setup keyboard event listeners
 	 * for the given element *cough*
@@ -324,7 +338,7 @@ var Impure = {
 	 * @param element el The element for which to setup keyboard event listeners.
 	 * @return undefined
 	 */
-	setupEvents: function (el) {
+	setupEvents: R.curry(function (el) {
 
 		el.addEventListener('keydown', function (e) {
 
@@ -339,7 +353,7 @@ var Impure = {
 
 			KEY.onKeyUp( e.keyCode );
 		});
-	},
+	}),
 	/**
 	 * Performs the basic game-loop
 	 * 
@@ -348,10 +362,10 @@ var Impure = {
 	 * @param array entities Array of objects with matricies and an image.
 	 * @return undefined
 	 */
-	game: function (fps, canvas, entities) {
+	game: R.curry(function (fps, canvas, entities) {
 
 		var ents = entities;
-		var prevTime = _.now();
+		var prevTime = now();
 
 		canvas.setAttribute('tabIndex', 0);
 
@@ -360,23 +374,23 @@ var Impure = {
 
 		var interval = setInterval(function () {
 
-			var delta = _.now() - prevTime;
+			var delta = now() - prevTime;
 
 			// THROTTLE FUNCTION AT FPS
 			if (delta < 1000/fps)
 				return;
 
-			prevTime = _.now();
+			prevTime = now();
 
 			// PERFORM LOGIC AND ABORT GAME WHEN FALSE RETURNED
 			ents = Impure.logic(canvas, ents);
 			Impure.abort(interval, ents);
 			Impure.graphics(canvas, ents);
 		}, 0);
-	}
+	})
 };
 
-Impure.drawRectangle = _.partial(Impure.draw, 'rectangle', _, _, _);
-Impure.drawColorRectangle = _.partial(Impure.drawRectangle, 'color', _, _);
-Impure.drawImageRectangle = _.partial(Impure.drawRectangle, 'image', _, _);
+Impure.drawRectangle = Impure.draw('rectangle');
+Impure.drawColorRectangle = Impure.drawRectangle('color');
+Impure.drawImageRectangle = Impure.drawRectangle('image');
 
