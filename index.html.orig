@@ -5,7 +5,13 @@
 		<title>Some functional gaming!</title>
 
 		<!-- RAMDA.JS -->
+<<<<<<< HEAD
+		<script src="ramda.js"></script>
+		<!-- SET RAMDA TO _ -->
+		<script>_ = window._ = R;</script>
+=======
 		<script src="ramda.min.js"></script>
+>>>>>>> d966431db403a6c5c11f70edf9b783b30441be66
 
 		<!-- KEY.JS -->
 		<script src="key.js"></script>

@@ -9,6 +9,11 @@ var now = Date.now;
  * @param array array Array to be cloned.
  * @return array New array of cloned array.
  */
+<<<<<<< HEAD
+var cloneArray = _.curry(function (array) {
+	return [].concat(array);
+});
+=======
 var cloneArray = R.curry(function (array) {
 	return [].concat(array);
 });
@@ -19,13 +24,18 @@ var cloneArray = R.curry(function (array) {
  * @return number Current time in milliseconds
  */
 var now = Date.now;
+>>>>>>> d966431db403a6c5c11f70edf9b783b30441be66
 
 /**
  * Reverse given array.
  * @param array array Array to be reversed.
  * @return array Reversed array.
  */
+<<<<<<< HEAD
+var reverse = _.curry(function (array) {
+=======
 var reverse = R.curry(function (array) {
+>>>>>>> d966431db403a6c5c11f70edf9b783b30441be66
 	return array.reverse();
 });
 
@@ -36,7 +46,11 @@ var reverse = R.curry(function (array) {
  * @param function fn Function for which arguments should be reversed
  * @return function New Function with reversed arguments.
  */
+<<<<<<< HEAD
+var flip = _.curry(function (fn) {
+=======
 var flip = R.curry(function (fn) {
+>>>>>>> d966431db403a6c5c11f70edf9b783b30441be66
 
 	return function () {
 
@@ -46,6 +60,13 @@ var flip = R.curry(function (fn) {
 	};
 });
 
+<<<<<<< HEAD
+var y = _.curry(function (mtx) {
+	return mtx[0][1];
+});
+
+var x = _.curry(function (mtx) {
+=======
 /**
  * 
  */
@@ -58,6 +79,7 @@ var y = R.curry(function (mtx) {
 });
 
 var x = R.curry(function (mtx) {
+>>>>>>> d966431db403a6c5c11f70edf9b783b30441be66
 	return mtx[0][0];
 });
 
@@ -68,7 +90,11 @@ var x = R.curry(function (mtx) {
  * @param array mtx An array representing a matrix ( see Matrix function below )
  * @return number The y-displacement of the given 2d matrix.
  */
+<<<<<<< HEAD
+var height = _.curry(function (mtx) {
+=======
 var height = R.curry(function (mtx) {
+>>>>>>> d966431db403a6c5c11f70edf9b783b30441be66
 	return mtx[1][1] - mtx[0][1];
 });
 
@@ -79,6 +105,17 @@ var height = R.curry(function (mtx) {
  * @param array mtx An array representing a matrix (see Matrix funciton below)
  * @return number The x-displacement of the given 2d matrix.
  */
+<<<<<<< HEAD
+var width = _.curry(function (mtx) {
+	return mtx[1][0] - mtx[0][0];
+});
+
+var add = _.curry(function (a, b) {
+	return a + b;
+});
+
+var multiply = _.curry(function (a, b) {
+=======
 var width = R.curry(function (mtx) {
 	return mtx[1][0] - mtx[0][0];
 });
@@ -88,11 +125,16 @@ var add = R.curry(function (b, a) {
 });
 
 var multiply = R.curry(function (b, a) {
+>>>>>>> d966431db403a6c5c11f70edf9b783b30441be66
 	return a * b;
 });
 
 var increment = incr = add(1);
+<<<<<<< HEAD
+var sum = _.reduce(add, 0);//_.partial(_.foldl, _, add, 0);
+=======
 var sum = R.reduce(add, 1);
+>>>>>>> d966431db403a6c5c11f70edf9b783b30441be66
 
 /**
  * Generates an array of
@@ -102,7 +144,11 @@ var sum = R.reduce(add, 1);
  * @param number n The length of array.
  * @return array New array consisting of 'n' entries.
  */
+<<<<<<< HEAD
+var numbers = _.compose(_.range(1), incr);
+=======
 var numbers = R.compose(R.range(1), incr);
+>>>>>>> d966431db403a6c5c11f70edf9b783b30441be66
 
 /**
  * Maps each entry in an array
@@ -124,7 +170,11 @@ var numbers = R.compose(R.range(1), incr);
  * @param array a Array to be mapped to its constituents' sums.
  * @return array New array with entries of the old array's constituents' sums.
  */
+<<<<<<< HEAD
+var mapSum = _.map(sum);
+=======
 var mapSum = R.map(sum);
+>>>>>>> d966431db403a6c5c11f70edf9b783b30441be66
 
 var test = [[1,2,3], [5,5,5]];
 var test2 = [[3,3,3], [2,2,2], [1,1,1]];
@@ -148,11 +198,20 @@ var test2 = [[3,3,3], [2,2,2], [1,1,1]];
  * @param function fn A function with which to merge the arrays.
  * @return array The product of the merged arrays.
  */
+<<<<<<< HEAD
+var merge = _.curry(function (fn, arr2, arr) {
+	console.log(fn);
+	return _.map(arr, function (a, i) {
+		var b = arr2[i];
+		return _.bind(fn, this, a, b)();
+	}.bind(this));
+=======
 var merge = R.curry(function (arr, arr2, fn) {
 	return R.map(R.bind(this, function (a, i) {
 		var b = arr2[i];
 		return fn(b, a);
 	}), arr);
+>>>>>>> d966431db403a6c5c11f70edf9b783b30441be66
 });
 
 /**
@@ -176,12 +235,21 @@ var mergeByMult = merge(multiply);
  */
 var Matrix = Array;
 
+<<<<<<< HEAD
+Matrix.I = function (n) {
+	return _.map(function (v, i) {
+		console.log(v);
+		return (v == v);
+	}, numbers(n));
+};
+=======
 Matrix.I = R.curry(function (n) {
 	return R.map(function (v, i) {
 		console.log(v);
 		return (v == v);
 	}, numbers(n));
 });
+>>>>>>> d966431db403a6c5c11f70edf9b783b30441be66
 
 /**
  * Converts the matrix 
@@ -191,7 +259,11 @@ Matrix.I = R.curry(function (n) {
  * @param array array A matrix.
  * @return array An array of columns.
  */
+<<<<<<< HEAD
+Matrix.columns = _.zip;
+=======
 Matrix.columns = unzip;
+>>>>>>> d966431db403a6c5c11f70edf9b783b30441be66
 
 /**
  * Multiplies the given row 
@@ -202,8 +274,13 @@ Matrix.columns = unzip;
  * @param array b An array representing an entire matrix with arrays as rows of its values.
  * @return array A new array representing a matrix as the product of the multiplication.
  */
+<<<<<<< HEAD
+Matrix.multRbyCs = _.curry(function (b, a) {
+	return _.map(mergeByMult(a), Matrix.columns(b));
+=======
 Matrix.multRowbyCols = R.curry(function (b, a) {
 	return R.map(mergeByMult(a), Matrix.columns(b));
+>>>>>>> d966431db403a6c5c11f70edf9b783b30441be66
 });
 
 /**
@@ -213,12 +290,21 @@ Matrix.multRowbyCols = R.curry(function (b, a) {
  * @param array b An array representing an entire matrix, where arrays are rows of values.
  * @return array A new array representing a matrix as the product of the multiplication of the other two.
  */
+<<<<<<< HEAD
+Matrix.multiply = _.curry(function (a, b) {
+	return _.map(_.compose(mapSum, Matrix.multRbyCs(b)), a);
+});
+
+
+var move = _.curry(function (mtx, entity) {
+=======
 Matrix.multiply = R.curry(function (b, a) {
 	return R.map(R.compose(mapSum, Matrix.multRbyCs(b)), a);
 });
 
 
 var move = R.curry(function (mtx, entity) {
+>>>>>>> d966431db403a6c5c11f70edf9b783b30441be66
 	var ent = cloneArray(entity);
 	return ent;
 });
@@ -260,7 +346,11 @@ var Impure = {
 	 * @param object data Object of data to draw.
 	 * @param element canvas Canvas element on which to draw.
 	 */
+<<<<<<< HEAD
+	draw: _.curry(function (shape, fill, canvas, data) {
+=======
 	draw: R.curry(function (shape, fill, canvas, data) {
+>>>>>>> d966431db403a6c5c11f70edf9b783b30441be66
 
 		var ctx = canvas.getContext('2d');
 		var x = data.x;
@@ -291,6 +381,15 @@ var Impure = {
 	/**
 	 * Draws all the entities on the HTML canvas.
 	 */
+<<<<<<< HEAD
+	graphics: _.curry(function (canvas, entities) {
+
+		// CONVERT ENTITIES INTO DRAWABLE DATA
+		var data = _.map(drawable, entities);
+
+		// DRAW EACH DATA
+		_.forEach(Impure.drawImageRectangle(canvas), data);
+=======
 	graphics: R.curry(function (canvas, entities) {
 
 		// CONVERT ENTITIES INTO DRAWABLE DATA
@@ -298,6 +397,7 @@ var Impure = {
 
 		// DRAW EACH DATA
 		R.forEach(Impure.drawImageRectangle(canvas), data);
+>>>>>>> d966431db403a6c5c11f70edf9b783b30441be66
 	}),
 	/**
 	 * Handles the logic of the game entities.
@@ -306,7 +406,11 @@ var Impure = {
 	 * @param array entities An array of entity data objects.
 	 * @return mixed False if the game should abort, an array of altered entities if it should continue.
 	 */
+<<<<<<< HEAD
+	logic: _.curry(function (canvas, entities) {
+=======
 	logic: R.curry(function (canvas, entities) {
+>>>>>>> d966431db403a6c5c11f70edf9b783b30441be66
 
 		// STOP GAME ON ESC PRESS
 		if (KEY.isDown(27)) 
@@ -314,7 +418,11 @@ var Impure = {
 
 
 		var ents = cloneArray(entities);
+<<<<<<< HEAD
+		var player = _.find(_.propEq('id', 'player'), ents);
+=======
 		var player = R.find(R.propEq('id', 'player'), ents);
+>>>>>>> d966431db403a6c5c11f70edf9b783b30441be66
 
 		if (KEY.isDown(68)) 
 			player = move(player);
@@ -328,7 +436,11 @@ var Impure = {
 	 * @param boolean bool The boolean for which to test.
 	 * @return undefined
 	 */
+<<<<<<< HEAD
+	abort: _.curry(function (interval, bool) {
+=======
 	abort: R.curry(function (interval, bool) {
+>>>>>>> d966431db403a6c5c11f70edf9b783b30441be66
 		if (bool === false)
 			clearInterval(interval);
 	}),
@@ -340,7 +452,11 @@ var Impure = {
 	 * @param element el The element for which to setup keyboard event listeners.
 	 * @return undefined
 	 */
+<<<<<<< HEAD
+	setupEvents: _.curry(function (el) {
+=======
 	setupEvents: R.curry(function (el) {
+>>>>>>> d966431db403a6c5c11f70edf9b783b30441be66
 
 		el.addEventListener('keydown', function (e) {
 
@@ -364,7 +480,11 @@ var Impure = {
 	 * @param array entities Array of objects with matricies and an image.
 	 * @return undefined
 	 */
+<<<<<<< HEAD
+	game: _.curry(function (fps, canvas, entities) {
+=======
 	game: R.curry(function (fps, canvas, entities) {
+>>>>>>> d966431db403a6c5c11f70edf9b783b30441be66
 
 		var ents = entities;
 		var prevTime = now();

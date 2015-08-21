@@ -6,6 +6,8 @@ spriteSheet.src = 'images/spritesheet.png';
 // ON DOM LOADED
 document.addEventListener('DOMContentLoaded', function () {
 
+	return;
+
 	// PLAY THE GAME!
 	Impure.game(
 		30, 
