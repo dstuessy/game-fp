@@ -47,6 +47,7 @@ var flip = R.curry(function (fn) {
 });
 
 /**
+ * R.compose(R.unnest, R.map(R.splitEvery(1)))(test)
  * 
  */
 var unzip = R.map(Array);
