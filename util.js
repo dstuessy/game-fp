@@ -1,6 +1,12 @@
 
 var now = Date.now;
 
+var forEvery = R.curry(function (n, array) {
+	R.forEach(function (val, i) {
+		console.log(arguments);
+	}, array);
+});
+
 /**
  * Shallow clones an array
  * Returns a new array comprising of the
@@ -47,7 +53,7 @@ var flip = R.curry(function (fn) {
 });
 
 /**
- * R.compose(R.unnest, R.map(R.splitEvery(1)))(test)
+ * R.compose(R.map(R.flatten), R.apply(R.zip), R.map(R.splitEvery(1)))( [[1,2,3],[2,2,2],[3,3,3]] )
  * 
  */
 var unzip = R.map(Array);
@@ -141,19 +147,21 @@ var test2 = [[3,3,3], [2,2,2], [1,1,1]];
  * in both arrays in parallel 
  * positions.
  *
- * e.g. merge([1,2,3], [2,2,2], add) 
+ * e.g. mergeBy(add, [1,2,3], [2,2,2]) 
  *	=> [1+2, 2+2, 3+2];
  * 
+ * @param function fn A function with which to merge the arrays.
  * @param array arr An array to be merged
  * @param array arr2 Another array to be merged
- * @param function fn A function with which to merge the arrays.
  * @return array The product of the merged arrays.
  */
-var merge = R.curry(function (arr, arr2, fn) {
-	return R.map(R.bind(this, function (a, i) {
+var mergeBy = R.curry(function (fn, arr, arr2) {
+	var i = 0;
+	return R.map(function (a) {
 		var b = arr2[i];
+		i++;
 		return fn(b, a);
-	}), arr);
+	}, arr);
 });
 
 /**
@@ -163,7 +171,7 @@ var merge = R.curry(function (arr, arr2, fn) {
  * @param array b Array to be merged with another.
  * @return array New array where its entries are the products of multiplication for each entry of the source arrays.
  */
-var mergeByMult = merge(multiply);
+var mergeByMult = mergeBy(multiply);
 
 /**
  * Converts arguments into
