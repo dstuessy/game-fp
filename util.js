@@ -30,12 +30,55 @@ var callEvery = R.curry(function (n, fn) {
 	};
 });
 
-var forEvery = R.curry(function (n, array) {
-	R.forEach(function (val, i) {
-		console.log(arguments);
+/**
+ * Iterates over an array 
+ * by every n entries. 
+ * Passes n number of 
+ * arguments to the 
+ * given function.
+ *
+ * @see mapEvery()
+ * @param number n The number by which to map.
+ * @param function fn The function by which to map.
+ * @param array array The array to map.
+ * @return array Mapped array.
+ */
+var forEvery = R.curry(function (n, fn ,array) {
+
+	var i = count(0);
+	var args = [];
+	var func = callEvery(n, function () {
+		// execute fn 
+		R.apply(fn, args);
+		// clear args 
+		args = [];
+	});
+
+	// ITERATE THROUGH ARRAY
+	R.forEach(function (val) {
+		
+		// LOAD val TO args
+		args = R.insert(R.length(args), val, args);
+
+		// APPLY args TO fn
+		func();
 	}, array);
 });
 
+/**
+ * Maps an array by every n
+ * entries. Passes n number
+ * of arguments to the 
+ * given function.
+ *
+ * @example
+ * mapEvery(2, Array, [1,2,3,4,5,6])
+ * //=> [[1,2,3],[4,5,6]]
+ * @param number n The number by which to map.
+ * @param function fn The function by which to map.
+ * @param array array The array to map.
+ * @return array Mapped array.
+ */
 var mapEvery = R.curry(function (n, fn, array) {
 
 	var i = count(0);
@@ -201,9 +244,9 @@ var test2 = [[3,3,3], [2,2,2], [1,1,1]];
  * in both arrays in parallel 
  * positions.
  *
- * e.g. mergeBy(add, [1,2,3], [2,2,2]) 
- *	=> [1+2, 2+2, 3+2];
- * 
+ * @example
+ * mergeBy(add, [1,2,3], [2,2,2]) 
+ * //=> [1+2, 2+2, 3+2];
  * @param function fn A function with which to merge the arrays.
  * @param array arr An array to be merged
  * @param array arr2 Another array to be merged
@@ -245,7 +288,7 @@ var splitEveryArray = R.map(R.splitEvery(1));
  * of arrays where each entry is
  * an array itself.
  *
- * e.g. 
+ * @example
  * [[1,2,3],[2,2,2],[3,3,3]] //=> [[1,2,3,2,2,2,3,3,3]]
  * or 
  * [[[1],[2],[3]], [[2],[2],[2]], [[3],[3],[3]] //=> [[1,2,3], [2,2,3], [3,2,3]]
@@ -268,7 +311,6 @@ var Matrix = Array;
 
 Matrix.I = R.curry(function (n) {
 	return R.map(function (v, i) {
-		console.log(v);
 		return (v == v);
 	}, numbers(n));
 });
