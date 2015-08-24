@@ -1,10 +1,64 @@
 
 var now = Date.now;
 
+var count = function (n) {
+
+	var i = n;
+
+	return function () {
+		i++;
+		return i;
+	};
+};
+
+
+/**
+ * Call a function every n number
+ * of executions.
+ *
+ * @param number n Number of executions for given function.
+ * @param function fn Function to be called after n number of executions.
+ * @return function Function that will execute fn after n number of executions. 
+ */
+var callEvery = R.curry(function (n, fn) {
+	var i = count(0);
+	return function () {
+		if (i() == n) {
+			i = count(0);
+			return R.apply(fn, arguments);
+		}
+	};
+});
+
 var forEvery = R.curry(function (n, array) {
 	R.forEach(function (val, i) {
 		console.log(arguments);
 	}, array);
+});
+
+var mapEvery = R.curry(function (n, fn, array) {
+
+	var i = count(0);
+	var rtrn = [];
+	var args = [];
+	var func = callEvery(n, function () {
+		// execute fn 
+		rtrn = R.insert(R.length(rtrn), R.apply(fn, args), rtrn);
+		// clear args 
+		args = [];
+	});
+
+	// ITERATE THROUGH ARRAY
+	R.forEach(function (val) {
+		
+		// LOAD val TO args
+		args = R.insert(R.length(args), val, args);
+
+		// APPLY args TO fn
+		func();
+	}, array);
+
+	return rtrn;
 });
 
 /**
@@ -56,7 +110,7 @@ var flip = R.curry(function (fn) {
  * R.compose(R.map(R.flatten), R.apply(R.zip), R.map(R.splitEvery(1)))( [[1,2,3],[2,2,2],[3,3,3]] )
  * 
  */
-var unzip = R.map(Array);
+var unzip = R.apply(R.zip);
 
 console.log(unzip);
 
@@ -173,6 +227,33 @@ var mergeBy = R.curry(function (fn, arr, arr2) {
  */
 var mergeByMult = mergeBy(multiply);
 
+var zipWithConcat = R.zipWith(R.concat);
+
+var mergeByConcat = unzipWithConcat = R.apply(zipWithConcat);
+
+var isHeadNil = R.compose(R.isNil, R.head);
+
+var splitEveryArray = R.map(R.splitEvery(1));
+
+
+/**
+ * Reduces an array of arrays
+ * by concatenating the lowest
+ * level of the array.
+ *
+ * The array must consist
+ * of arrays where each entry is
+ * an array itself.
+ *
+ * e.g. 
+ * [[1,2,3],[2,2,2],[3,3,3]] //=> [[1,2,3,2,2,2,3,3,3]]
+ * or 
+ * [[[1],[2],[3]], [[2],[2],[2]], [[3],[3],[3]] //=> [[1,2,3], [2,2,3], [3,2,3]]
+ * @param array Array An array of arrays of arrays to be reduced via concatentation.
+ * @return array A new array with each value of each index grouped by array.
+ */
+var reduceArraysByConcat = R.reduce(R.compose( R.ifElse( isHeadNil, R.last, mergeByConcat ), Array), null);
+
 /**
  * Converts arguments into
  * a matrix, where each 
@@ -200,7 +281,7 @@ Matrix.I = R.curry(function (n) {
  * @param array array A matrix.
  * @return array An array of columns.
  */
-Matrix.columns = unzip;
+Matrix.columns = R.compose( reduceArraysByConcat, splitEveryArray );
 
 /**
  * Multiplies the given row 
