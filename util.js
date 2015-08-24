@@ -155,8 +155,6 @@ var flip = R.curry(function (fn) {
  */
 var unzip = R.apply(R.zip);
 
-console.log(unzip);
-
 var y = R.curry(function (mtx) {
 	return mtx[0][1];
 });
@@ -345,8 +343,8 @@ Matrix.multRowbyCols = R.curry(function (b, a) {
  * @param array b An array representing an entire matrix, where arrays are rows of values.
  * @return array A new array representing a matrix as the product of the multiplication of the other two.
  */
-Matrix.multiply = R.curry(function (b, a) {
-	return R.map(R.compose(mapSum, Matrix.multRbyCs(b)), a);
+Matrix.multiply = R.curry(function (a, b) {
+	return R.map(R.compose(mapSum, Matrix.multRowbyCols(b)), a);
 });
 
 
