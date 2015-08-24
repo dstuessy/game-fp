@@ -347,6 +347,24 @@ Matrix.multiply = R.curry(function (a, b) {
 	return R.map(R.compose(mapSum, Matrix.multRowbyCols(b)), a);
 });
 
+/**
+ * Transform a matrix.
+ *
+ * Is the same as matrix multiplication.
+ * Transoformation is the product 
+ * of a matrix and a given transformation
+ * matrix. Transformation matricies are 
+ * like any other matrix, only that
+ * when multiplying them by another matrix, 
+ * the other matrix would have changed
+ * in a desired maner.
+ *
+ * @param array transform Transformation matrix.
+ * @param array matrix Matrix to be transformed.
+ * @return array Transformed matrix.
+ */
+Matrix.transform = Matrix.multiply;
+
 
 var move = R.curry(function (mtx, entity) {
 	var ent = cloneArray(entity);
