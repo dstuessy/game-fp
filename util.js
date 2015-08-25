@@ -1,6 +1,23 @@
 
 var now = Date.now;
 
+/**
+ * A counter.
+ * Starts at the given number.
+ * Returns a function that 
+ * can be 
+ *
+ * @example
+ * var i = count(0)
+ * i()
+ * //=> 1
+ * i()
+ * //=> 2
+ * i() 
+ * //=> 3
+ * @param number n The starting number for the counter
+ * @return Function A counter function.
+ */
 var count = function (n) {
 
 	var i = n;
