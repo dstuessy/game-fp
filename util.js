@@ -211,7 +211,7 @@ var multiply = R.curry(function (b, a) {
 });
 
 var increment = incr = add(1);
-var sum = R.reduce(add, 1);
+var sum = R.reduce(add, 0);
 
 /**
  * Generates an array of
