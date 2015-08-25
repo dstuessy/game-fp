@@ -1,4 +1,9 @@
 
+var tapConsole = R.tap(function () {
+	console.log.apply(console, arguments);
+	return R.head(arguments);
+});
+
 var now = Date.now;
 
 /**
@@ -276,6 +281,8 @@ var mergeBy = R.curry(function (fn, arr, arr2) {
 	}, arr);
 });
 
+var mergeBySum = mergeBy(add);
+
 /**
  * Merge arrays by multiplication.
  *
@@ -290,6 +297,16 @@ var zipWithConcat = R.zipWith(R.concat);
 var mergeByConcat = unzipWithConcat = R.apply(zipWithConcat);
 
 var isHeadNil = R.compose(R.isNil, R.head);
+
+/**
+ * Returns either a or b
+ * where depending if it is not 
+ * Nil (null/undefined).
+ *
+ * @param function fn Function to be executed if ifElse passes. 
+ * @return function Function that takes two arguments for ifElse.
+ */
+var skipNil = R.ifElse(R.compose(isHeadNil, Array), R.compose(R.last, Array));
 
 var splitEveryArray = R.map(R.splitEvery(1));
 
@@ -310,7 +327,7 @@ var splitEveryArray = R.map(R.splitEvery(1));
  * @param array Array An array of arrays of arrays to be reduced via concatentation.
  * @return array A new array with each value of each index grouped by array.
  */
-var reduceArraysByConcat = R.reduce(R.compose( R.ifElse( isHeadNil, R.last, mergeByConcat ), Array), null);
+var reduceArraysByConcat = R.reduce(skipNil(R.compose(mergeByConcat, Array)), null);
 
 /**
  * Converts arguments into
