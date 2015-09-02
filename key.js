@@ -20,6 +20,11 @@ var KEY = {
 	},
 	resetAll: function () {
 		this.down = {};
-	}
+	},
+	D: 68,
+	A: 65,
+	W: 87,
+	S: 83,
+	ESC: 27
 };
 

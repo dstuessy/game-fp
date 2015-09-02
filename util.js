@@ -408,10 +408,49 @@ Matrix.add = mergeBy(mergeBy(add));
  */
 Matrix.transform = Matrix.multiply;
 
+var isPlayer = R.propEq('id', 'player');
 
-var move = R.curry(function (mtx, entity) {
-	var ent = cloneArray(entity);
-	return ent;
+var playerIndex = R.findIndex(isPlayer);
+
+var findPlayer = getPlayer = R.find(isPlayer);
+
+var playerLens = R.compose(R.lensIndex, playerIndex);
+
+/**
+ * Get player data
+ * @param array entities Array of entity objects.
+ * @return object A clone of the player object.
+ */
+var viewPlayer = function (entities) {
+	return R.view(playerLens(entities), entities);
+};
+
+/**
+ * Set player data
+ * @param object player Object of player data
+ * @param array entities Array of entity objects
+ * @return array New array of entity objects with modified player data.
+ */
+var setPlayer = function (player, entities) {
+	return R.set(playerLens(entities), player, entities);
+};
+
+var posLens = R.lensProp('pos');
+
+var viewPos = R.view(posLens);
+
+var setPos = R.set(posLens);
+
+/**
+ * Translates the position of
+ * a given entity by a given matrix.
+ *
+ * @param object entity An entity to translate.
+ * @param array mtx A matrix by which to translate.
+ * @return object New entity with modified "pos" property.
+ */
+var move = R.curry(function (entity, mtx) {
+	return setPos(Matrix.add(viewPos(entity), mtx), entity);
 });
 
 /**
@@ -479,15 +518,20 @@ var Impure = {
 			ctx.stroke();
 		}
 	}),
+	clearCanvas: function (canvas) {
+		canvas.width = canvas.width;
+	},
 	/**
 	 * Draws all the entities on the HTML canvas.
 	 */
 	graphics: R.curry(function (canvas, entities) {
 
+		Impure.clearCanvas(canvas);
+
 		// CONVERT ENTITIES INTO DRAWABLE DATA
 		var data = R.map(drawable, entities);
 
-		// DRAW EACH DATA
+		// DRAW DRAWABLE DATA
 		R.forEach(Impure.drawImageRectangle(canvas), data);
 	}),
 	/**
@@ -500,15 +544,24 @@ var Impure = {
 	logic: R.curry(function (canvas, entities) {
 
 		// STOP GAME ON ESC PRESS
-		if (KEY.isDown(27)) 
+		if (KEY.isDown(KEY.ESC)) 
 			return false;
 
 
+		//var playerLens = R.lensIndex(playerIndex(entities));
+		//var player = R.get(playerLens, entities);
 		var ents = cloneArray(entities);
-		var player = R.find(R.propEq('id', 'player'), ents);
+		var player = viewPlayer(ents);
 
-		if (KEY.isDown(68)) 
-			player = move(player);
+		console.log('player: ', player);
+
+		// MOVE PLAYER TO THE RIGHT
+		if (KEY.isDown(KEY.D)) 
+			ents = setPlayer(move(player, [[5,0], [5,0]]), ents);
+		if (KEY.isDown(KEY.A))
+			ents = setPlayer(move(player, [[-5,0], [-5,0]]), ents);
+
+		console.log('ents: ', ents);
 
 		return ents;
 	}),
@@ -569,15 +622,16 @@ var Impure = {
 
 			var delta = now() - prevTime;
 
-			// THROTTLE FUNCTION AT FPS
+			// PERFORM LOGIC AND ABORT GAME WHEN FALSE RETURNED
+			ents = Impure.logic(canvas, ents);
+			Impure.abort(interval, ents);
+
+			// THROTTLE GRAPHICS AT FPS
 			if (delta < 1000/fps)
 				return;
 
 			prevTime = now();
 
-			// PERFORM LOGIC AND ABORT GAME WHEN FALSE RETURNED
-			ents = Impure.logic(canvas, ents);
-			Impure.abort(interval, ents);
 			Impure.graphics(canvas, ents);
 		}, 0);
 	})
