@@ -250,7 +250,7 @@ var numbers = R.compose(R.range(1), incr);
  */
 var mapSum = R.map(sum);
 
-var test = [[1,2,3], [5,5,5]];
+var test = [[1,2,3], [5,5,5], [6,6,6]];
 var test2 = [[3,3,3], [2,2,2], [1,1,1]];
 
 /**
@@ -355,7 +355,7 @@ Matrix.I = R.curry(function (n) {
  * @param array array A matrix.
  * @return array An array of columns.
  */
-Matrix.columns = R.compose( reduceArraysByConcat, splitEveryArray );
+Matrix.columns = unzip = R.compose( reduceArraysByConcat, splitEveryArray );
 
 /**
  * Multiplies the given row 
@@ -380,6 +380,15 @@ Matrix.multRowbyCols = R.curry(function (b, a) {
 Matrix.multiply = R.curry(function (a, b) {
 	return R.map(R.compose(mapSum, Matrix.multRowbyCols(b)), a);
 });
+
+/**
+ * Adds two matricies together
+ *
+ * @param array a An array representing an entire matrix.
+ * @param array b An array representing an entire matrix.
+ * @return array A new array representing the summation of the passed matricies.
+ */
+Matrix.add = mergeBy(mergeBy(add));
 
 /**
  * Transform a matrix.
