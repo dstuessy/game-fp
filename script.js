@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', function () {
 					[0, 0],
 					[40, 40]
 				],
+				walkSpeed: 5,
 				color: 'green',
 				image: spriteSheet,
 				imgPos: [0, 80]
@@ -30,6 +31,7 @@ document.addEventListener('DOMContentLoaded', function () {
 					[100, 100],
 					[140, 140]
 				],
+				walkSpeed: 5,
 				color: 'red',
 				image: spriteSheet,
 				imgPos: [0, 40]

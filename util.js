@@ -1,4 +1,12 @@
 
+/**
+ * returns the first argument passed
+ * "Taps" into the console whilst on
+ * a chain of functions. Does not
+ * mutate arguments passed. 
+ * @param mixed arguments Any number of arguments to pass. 
+ * @return mixed The arguments passed except the frst argument (the label for console log).
+ */
 var tapConsole = R.tap(function () {
 	console.log.apply(console, arguments);
 	return R.head(arguments);
@@ -33,6 +41,35 @@ var count = function (n) {
 	};
 };
 
+/**
+ * Time Accumulator
+ * Returns a function that executes
+ * a passed function when called if the 
+ * duration (n) has passed since the 
+ * last time the timeAcc has been called.
+ * @param number n Duration between function calls
+ * @return function Function that is passed a function that is called if duration (n) has passed.
+ */
+var timeAccumulator = throttle = function (n) {
+	var time = now();
+	return function (fn) {
+		var args = R.tail(arguments); // get arguments to pass to function
+		if (now() - time >= n) { // execute function if duration passed
+			time = now(); // reset time
+			R.apply(fn, args); // execute function
+		}
+	};
+};
+
+/**
+ * Shallow conversion of a 
+ * array-like object into
+ * an array.
+ *
+ * @param object list Array-like object
+ * @return array Array version of the array-like object
+ */
+var toArray = R.into([], R.identity);
 
 /**
  * Call a function every n number
@@ -161,15 +198,12 @@ var reverse = R.curry(function (array) {
  * @param function fn Function for which arguments should be reversed
  * @return function New Function with reversed arguments.
  */
-var flip = R.curry(function (fn) {
-
-	return function () {
-
+var flip = function (fn) {
+	return R.curryN(fn.length, function () {
 		var args = reverse(toArray(arguments));
-
-		return fn.apply(null, args);
-	};
-});
+		return R.apply(fn, args);
+	});
+};
 
 /**
  * R.compose(R.map(R.flatten), R.apply(R.zip), R.map(R.splitEvery(1)))( [[1,2,3],[2,2,2],[3,3,3]] )
@@ -211,12 +245,22 @@ var add = R.curry(function (b, a) {
 	return a + b;
 });
 
+var subtract = R.curry(function (b, a) {
+	return a - b;
+});
+
 var multiply = R.curry(function (b, a) {
 	return a * b;
 });
 
+var pow = R.curry(flip(Math.pow));
+
+// SOME CURRIED UTIL FUNCTIONS 
+// FOR MATH
 var increment = incr = add(1);
 var sum = R.reduce(add, 0);
+var product = R.reduce(multiply, 1);
+var squared = pow(2);
 
 /**
  * Generates an array of
@@ -391,6 +435,14 @@ Matrix.multiply = R.curry(function (a, b) {
 Matrix.add = mergeBy(mergeBy(add));
 
 /**
+ * Subtracts two matricies from each other.
+ * @param array a An array representing an entire matrix.
+ * @param array b An array representing an entire matrix.
+ * @return array A new array representing the subtraction of the passed matricies.
+ */
+Matrix.subtract = mergeBy(mergeBy(subtract));
+
+/**
  * Transform a matrix.
  *
  * Is the same as matrix multiplication.
@@ -435,11 +487,30 @@ var setPlayer = function (player, entities) {
 	return R.set(playerLens(entities), player, entities);
 };
 
+// POSITION LENSES
 var posLens = R.lensProp('pos');
+var prevPosLens = R.lensProp('prevPos');
+var walkSpeedLens = R.lensProp('walkSpeed');
 
+// VIEW POSITIONS
 var viewPos = R.view(posLens);
+var viewPrevPos = R.view(prevPosLens);
+var viewWalkSpeed = R.view(walkSpeedLens);
 
+// SET POSITIONS
 var setPos = R.set(posLens);
+var setPrevPos = R.set(prevPosLens);
+var setWalkSpeed = R.view(walkSpeedLens);
+
+// DEFAULT PROPERTIES
+// -- non-mutable
+var Default = {
+	prevPos: R.always([
+		[0, 0], 
+		[0, 0]
+	]),
+	walkSpeed: R.always( 5 )
+};
 
 /**
  * Translates the position of
@@ -450,7 +521,33 @@ var setPos = R.set(posLens);
  * @return object New entity with modified "pos" property.
  */
 var move = R.curry(function (entity, mtx) {
+	entity = setPrevPos(viewPos(entity), entity);
 	return setPos(Matrix.add(viewPos(entity), mtx), entity);
+});
+
+/**
+ * Calculates the velocity of given entity
+ * @param object entity Entity of which to calculate the velocity
+ * @return array Array representing velocity as [x, y]
+ */
+var getVelocity = R.curry(function (entity) {
+	var pos = viewPos(entity);
+	var prevPos = viewPrevPos(entity) || Default.prevPos();
+	return R.head(Matrix.subtract(prevPos, pos));
+});
+
+/**
+ * Calculates the speed 
+ * of a velocity vector.
+ * Uses pythagoras a²+b²=c²
+ *
+ * @param array vel Velocity to convert to speed
+ * @return number Speed of velocity.
+ */
+var getSpeed = R.curry(function (vel) {
+	var x = R.head(vel);
+	var y = R.last(vel);
+	return Math.sqrt(squared(x) + squared(y));
 });
 
 /**
@@ -547,21 +644,23 @@ var Impure = {
 		if (KEY.isDown(KEY.ESC)) 
 			return false;
 
-
-		//var playerLens = R.lensIndex(playerIndex(entities));
-		//var player = R.get(playerLens, entities);
 		var ents = cloneArray(entities);
 		var player = viewPlayer(ents);
+		var walkSpeed = viewWalkSpeed(player);
+		var velocity = getVelocity(player);
+		var speed = getSpeed(velocity);
 
-		console.log('player: ', player);
+		console.log(walkSpeed);
+		console.log(velocity);
+		console.log(speed);
+
+		ents = setPlayer(setPrevPos(viewPos(player), player), ents); // reset prev pos to current pos
 
 		// MOVE PLAYER TO THE RIGHT
 		if (KEY.isDown(KEY.D)) 
 			ents = setPlayer(move(player, [[5,0], [5,0]]), ents);
 		if (KEY.isDown(KEY.A))
 			ents = setPlayer(move(player, [[-5,0], [-5,0]]), ents);
-
-		console.log('ents: ', ents);
 
 		return ents;
 	}),
@@ -575,6 +674,7 @@ var Impure = {
 	abort: R.curry(function (interval, bool) {
 		if (bool === false)
 			clearInterval(interval);
+		return bool;
 	}),
 	/**
 	 * Setup keyboard event listeners
@@ -611,29 +711,25 @@ var Impure = {
 	game: R.curry(function (fps, canvas, entities) {
 
 		var ents = entities;
-		var prevTime = now();
+		var throttled = timeAccumulator(1000/fps); // throttle any given function to fps
 
+		// APPLY FOCUS TO CANVAS ELEMENT
 		canvas.setAttribute('tabIndex', 0);
 
 		// SETUP CANVAS EVENT LISTENERS
 		Impure.setupEvents( canvas );
 
+		// BEGIN GAME LOOP
 		var interval = setInterval(function () {
-
-			var delta = now() - prevTime;
 
 			// PERFORM LOGIC AND ABORT GAME WHEN FALSE RETURNED
 			ents = Impure.logic(canvas, ents);
-			Impure.abort(interval, ents);
-
-			// THROTTLE GRAPHICS AT FPS
-			if (delta < 1000/fps)
+			// ABORT GAME LOOP IF GAME LOGIC RETURNS FALSY VALUE
+			if (!Impure.abort(interval, ents))
 				return;
-
-			prevTime = now();
-
-			Impure.graphics(canvas, ents);
-		}, 0);
+			// THROTTLE GRAPHICS RENDERING
+			throttled(Impure.graphics, canvas, ents);
+		}, 10);
 	})
 };
 
