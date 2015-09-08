@@ -520,10 +520,12 @@ var Default = {
  * @param array mtx A matrix by which to translate.
  * @return object New entity with modified "pos" property.
  */
-var move = R.curry(function (entity, mtx) {
+var move = R.curry(function (mtx, entity) {
 	entity = setPrevPos(viewPos(entity), entity);
 	return setPos(Matrix.add(viewPos(entity), mtx), entity);
 });
+
+//var moveByVel = R.compose();
 
 /**
  * Calculates the velocity of given entity
@@ -649,6 +651,8 @@ var Impure = {
 		var walkSpeed = viewWalkSpeed(player);
 		var velocity = getVelocity(player);
 		var speed = getSpeed(velocity);
+		var acc = (speed < walkSpeed) ? 0.5 : 0;
+		var moveSpeed = speed + acc;
 
 		console.log(walkSpeed);
 		console.log(velocity);
@@ -658,9 +662,9 @@ var Impure = {
 
 		// MOVE PLAYER TO THE RIGHT
 		if (KEY.isDown(KEY.D)) 
-			ents = setPlayer(move(player, [[5,0], [5,0]]), ents);
+			ents = setPlayer(move([[moveSpeed,0], [moveSpeed,0]], player), ents);
 		if (KEY.isDown(KEY.A))
-			ents = setPlayer(move(player, [[-5,0], [-5,0]]), ents);
+			ents = setPlayer(move([[-moveSpeed,0], [-moveSpeed,0]], player), ents);
 
 		return ents;
 	}),
