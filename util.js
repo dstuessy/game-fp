@@ -61,6 +61,16 @@ var timeAccumulator = throttle = function (n) {
 	};
 };
 
+var deltaTime = function () {
+	var time = now();
+
+	return function () {
+		var rtrnTime = now() - time;
+		time = now();
+		return rtrnTime;
+	};
+};
+
 /**
  * Shallow conversion of a 
  * array-like object into
@@ -640,7 +650,7 @@ var Impure = {
 	 * @param array entities An array of entity data objects.
 	 * @return mixed False if the game should abort, an array of altered entities if it should continue.
 	 */
-	logic: R.curry(function (canvas, entities) {
+	logic: R.curry(function (canvas, entities, delta) {
 
 		// STOP GAME ON ESC PRESS
 		if (KEY.isDown(KEY.ESC)) 
@@ -715,7 +725,9 @@ var Impure = {
 	game: R.curry(function (fps, canvas, entities) {
 
 		var ents = entities;
-		var throttled = timeAccumulator(1000/fps); // throttle any given function to fps
+		var intervalTime = 1000/fps;
+		var throttled = timeAccumulator(intervalTime); // throttle any given function to fps
+		var delta = deltaTime();
 
 		// APPLY FOCUS TO CANVAS ELEMENT
 		canvas.setAttribute('tabIndex', 0);
@@ -723,17 +735,29 @@ var Impure = {
 		// SETUP CANVAS EVENT LISTENERS
 		Impure.setupEvents( canvas );
 
-		// BEGIN GAME LOOP
-		var interval = setInterval(function () {
+		/**
+		 * Recursive loop for game logic
+		 * and rendering.
+		 * Uses requestAnimationFrame
+		 * to execute recursively 
+		 * when browser is ready to 
+		 * refresh the screen.
+		 *
+		 * @return undefined
+		 */
+		var loop = function () {
+			setTimeout(function () {
+				requestAnimationFrame(loop);
 
-			// PERFORM LOGIC AND ABORT GAME WHEN FALSE RETURNED
-			ents = Impure.logic(canvas, ents);
-			// ABORT GAME LOOP IF GAME LOGIC RETURNS FALSY VALUE
-			if (!Impure.abort(interval, ents))
-				return;
-			// THROTTLE GRAPHICS RENDERING
-			throttled(Impure.graphics, canvas, ents);
-		}, 10);
+				// PERFORM LOGIC AND ABORT GAME WHEN FALSE RETURNED
+				ents = Impure.logic(canvas, ents, delta());
+				// GRAPHICS RENDERING
+				Impure.graphics(canvas, ents);
+			}, intervalTime);
+		}
+
+		// BEGIN GAME LOOP
+		loop();
 	})
 };
 
