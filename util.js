@@ -812,8 +812,6 @@ var Impure = {
 		// SETUP CANVAS EVENT LISTENERS
 		Impure.setupEvents( canvas );
 
-		var prevTime = now();
-
 		/**
 		 * Recursive loop for game logic
 		 * and rendering.
@@ -828,15 +826,13 @@ var Impure = {
 
 			if (!ents)
 				return;
-			requestAnimationFrame(loop);
 
-			var time = now();
+			requestAnimationFrame(loop);
 
 			// PERFORM LOGIC AND ABORT GAME WHEN FALSE RETURNED
 			ents = Impure.logic(canvas, ents, delta());
 			// GRAPHICS RENDERING
 			Impure.graphics(canvas, ents);
-			prevTime = time;
 		};
 
 		// BEGIN GAME LOOP
