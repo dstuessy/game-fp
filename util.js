@@ -737,10 +737,9 @@ var Impure = {
 
 		var ents = cloneArray(entities);
 		var player = viewPlayer(ents);
-		var speed = getSpeed(getVelocity(player));
-		var walkSpeed = viewWalkSpeed(player);
-		var acc = (speed < walkSpeed) ? 0.5 : 0;
-		var moveSpeed = (walkSpeed + acc) * delta;
+		var acc = 0.5;
+		var speed = R.min( getSpeed(getVelocity(player)), viewWalkSpeed(player) ); // cap speed at walkSpeed 
+		var moveSpeed = (speed + acc) * delta;
 		var moveVelocity = [moveSpeed, 0];
 
 		//sleep(100);
