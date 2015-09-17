@@ -833,8 +833,7 @@ var Impure = {
 
 		var ents = entities;
 		var intervalTime = 1000/fps;
-		var throttled = timeAccumulator(intervalTime); // throttle any given function to fps
-		var delta = deltaTime(intervalTime);
+		var delta = deltaTime(intervalTime); // function for calculating the delta time since the last "tick"
 
 		// APPLY FOCUS TO CANVAS ELEMENT
 		canvas.setAttribute('tabIndex', 0);
