@@ -20,6 +20,11 @@ var tapConsole = R.tap(function () {
 
 var now = Date.now;
 
+var sleep = function (time) {
+	time += now();
+	while (now() < time){}
+} 
+
 /**
  * A counter.
  * Starts at the given number.
@@ -67,13 +72,14 @@ var timeAccumulator = throttle = function (n) {
 	};
 };
 
-var deltaTime = function () {
+var deltaTime = function (timeInterval) {
+
 	var time = now();
 
 	return function () {
 		var rtrnTime = now() - time;
 		time = now();
-		return rtrnTime;
+		return rtrnTime / timeInterval;
 	};
 };
 
@@ -446,6 +452,19 @@ Matrix.multiply = R.curry(function (a, b) {
 });
 
 /**
+ * Multiplies a matrix by a scalar value.
+ *
+ * @param number a A scalar value.
+ * @param array b A matrix.
+ * @return array A new matrix mutliplied by the scalar value.
+ */
+Matrix.scalarMult = R.curry(function (a, b) {
+	return R.map(R.map(function (n) {
+		return n * a;
+	}), b);
+});
+
+/**
  * Adds two matricies together
  *
  * @param array a An array representing an entire matrix.
@@ -566,7 +585,7 @@ var translateEntity = R.curry(function (mtx, entity) {
  * @return object New entity with modified "pos" property.
  */
 var move = R.curry(function (vel, entity) {
-	var mtx = velocityToMatrix(2, vel);
+	var mtx = Velocity.toMatrix(2, vel);
 	entity = setPrevPos(viewPos(entity), entity);
 	return translateEntity(mtx, entity);
 });
@@ -584,6 +603,8 @@ var getVelocity = R.curry(function (entity) {
 	return R.head(Matrix.subtract(prevPos, pos));
 });
 
+var Velocity = Array;
+
 /**
  * Converts an array
  * representing velocity into
@@ -594,7 +615,7 @@ var getVelocity = R.curry(function (entity) {
  * @param array vel The velocity
  * @return array The new matrix
  */
-var velocityToMatrix = R.curry(function (n, vel) {
+Velocity.toMatrix = R.curry(function (n, vel) {
 	return R.map(R.partial(R.identity, vel), R.range(0, n));
 });
 
@@ -604,7 +625,7 @@ var velocityToMatrix = R.curry(function (n, vel) {
  * @param array vel Velocity to negate.
  * @return array Negative velocity.
  */
-var negativeVel = R.map(negative);
+Velocity.negative = R.map(negative);
 
 /**
  * Calculates the speed 
@@ -716,16 +737,13 @@ var Impure = {
 
 		var ents = cloneArray(entities);
 		var player = viewPlayer(ents);
+		var speed = getSpeed(getVelocity(player));
 		var walkSpeed = viewWalkSpeed(player);
-		var velocity = getVelocity(player);
-		var speed = getSpeed(velocity);
 		var acc = (speed < walkSpeed) ? 0.5 : 0;
-		var moveSpeed = speed + acc;
-		var moveVelocity = [moveSpeed,0];
+		var moveSpeed = (walkSpeed + acc) * delta;
+		var moveVelocity = [moveSpeed, 0];
 
-		console.log(walkSpeed);
-		console.log(velocity);
-		console.log(speed);
+		//sleep(100);
 
 		ents = setPlayer(setPrevPos(viewPos(player), player), ents); // reset prev pos to current pos
 
@@ -733,7 +751,7 @@ var Impure = {
 		if (KEY.isDown(KEY.D)) 
 			ents = setPlayer(move(moveVelocity, player), ents);
 		if (KEY.isDown(KEY.A))
-			ents = setPlayer(move(negativeVel(moveVelocity), player), ents);
+			ents = setPlayer(move(Velocity.negative(moveVelocity), player), ents);
 
 		return ents;
 	}),
@@ -786,7 +804,7 @@ var Impure = {
 		var ents = entities;
 		var intervalTime = 1000/fps;
 		var throttled = timeAccumulator(intervalTime); // throttle any given function to fps
-		var delta = deltaTime();
+		var delta = deltaTime(intervalTime);
 
 		// APPLY FOCUS TO CANVAS ELEMENT
 		canvas.setAttribute('tabIndex', 0);
@@ -808,6 +826,7 @@ var Impure = {
 
 			if (!ents)
 				return;
+
 			requestAnimationFrame(loop);
 
 			// PERFORM LOGIC AND ABORT GAME WHEN FALSE RETURNED
