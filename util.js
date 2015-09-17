@@ -571,6 +571,16 @@ var Default = {
 	walkSpeed: R.always( 5 )
 };
 
+/**
+ * Translate an entity.
+ * Uses the Matrix.add function
+ * to translate an entity's position
+ * by a given matrix.
+ *
+ * @param array mtx Matrix for translation.
+ * @param object entity Entity who's position to translate.
+ * @return object New entity with translated position.
+ */
 var translateEntity = R.curry(function (mtx, entity) {
 	return setPos(Matrix.add(viewPos(entity), mtx), entity);
 });
@@ -590,7 +600,29 @@ var move = R.curry(function (vel, entity) {
 	return translateEntity(mtx, entity);
 });
 
-//var moveByVel = R.compose();
+/**
+ * Walk an entity!
+ * Performs the walking animation 
+ * for an entity.
+ * Accelerates them until they have 
+ * reached their walkSpeed.
+ *
+ * @param string dir Walking direction "left" or any other value as right.
+ * @param object entity Etity to be 'walked'.
+ * @param number delta The delta value for the current 'tick'.
+ * @return object New entity that has been 'walked'. 
+ */
+var walk = R.curry(function (dir, entity, delta) {
+
+	var acc = 0.5;
+	var speed = R.min( getSpeed(getVelocity(entity)), viewWalkSpeed(entity) ); // cap speed at walkSpeed 
+	var moveSpeed = (speed + acc) * delta,
+		moveSpeed = (dir === "left") ? negative(moveSpeed) : moveSpeed;
+	var moveVelocity = [moveSpeed, 0];
+
+	// MOVE PLAYER
+	return move(moveVelocity, entity);
+});
 
 /**
  * Calculates the velocity of given entity
@@ -737,20 +769,19 @@ var Impure = {
 
 		var ents = cloneArray(entities);
 		var player = viewPlayer(ents);
-		var acc = 0.5;
-		var speed = R.min( getSpeed(getVelocity(player)), viewWalkSpeed(player) ); // cap speed at walkSpeed 
-		var moveSpeed = (speed + acc) * delta;
-		var moveVelocity = [moveSpeed, 0];
 
 		//sleep(100);
 
-		ents = setPlayer(setPrevPos(viewPos(player), player), ents); // reset prev pos to current pos
+		// RESET PREV POS TO CURRENT POS FOR ENTITIES
+		ents = R.map(function (ent) {
+			return setPrevPos(viewPos(ent), ent);
+		}, ents);
 
 		// MOVE PLAYER TO THE RIGHT
 		if (KEY.isDown(KEY.D)) 
-			ents = setPlayer(move(moveVelocity, player), ents);
+			ents = setPlayer(walk("right", player, delta), ents);//ents = setPlayer(move(moveVelocity, player), ents);
 		if (KEY.isDown(KEY.A))
-			ents = setPlayer(move(Velocity.negative(moveVelocity), player), ents);
+			ents = setPlayer(walk("left", player, delta), ents);//ents = setPlayer(move(Velocity.negative(moveVelocity), player), ents);
 
 		return ents;
 	}),
