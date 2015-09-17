@@ -1,4 +1,10 @@
 
+/*
+ * Test matricies
+ */
+var test = [[1,2,3], [5,5,5], [6,6,6]];
+var test2 = [[3,3,3], [2,2,2], [1,1,1]];
+
 /**
  * returns the first argument passed
  * "Taps" into the console whilst on
@@ -58,6 +64,16 @@ var timeAccumulator = throttle = function (n) {
 			time = now(); // reset time
 			R.apply(fn, args); // execute function
 		}
+	};
+};
+
+var deltaTime = function () {
+	var time = now();
+
+	return function () {
+		var rtrnTime = now() - time;
+		time = now();
+		return rtrnTime;
 	};
 };
 
@@ -255,8 +271,15 @@ var multiply = R.curry(function (b, a) {
 
 var pow = R.curry(flip(Math.pow));
 
-// SOME CURRIED UTIL FUNCTIONS 
-// FOR MATH
+/**
+ * Always returns a negative number.
+ *
+ * @param number n Number to negate
+ * @return number Negated number.
+ */
+var negative = R.ifElse(R.lt(0), multiply(-1), R.identity);
+
+// SOME CURRIED UTIL FUNCTIONS FOR MATH
 var increment = incr = add(1);
 var sum = R.reduce(add, 0);
 var product = R.reduce(multiply, 1);
@@ -293,9 +316,6 @@ var numbers = R.compose(R.range(1), incr);
  * @return array New array with entries of the old array's constituents' sums.
  */
 var mapSum = R.map(sum);
-
-var test = [[1,2,3], [5,5,5], [6,6,6]];
-var test2 = [[3,3,3], [2,2,2], [1,1,1]];
 
 /**
  * Returns the product of 
@@ -460,6 +480,26 @@ Matrix.subtract = mergeBy(mergeBy(subtract));
  */
 Matrix.transform = Matrix.multiply;
 
+/**
+ * Translate a matrix 
+ * by a given matrix.
+ *
+ * @param array mtx Matrix to tanslate by.
+ * @param array mtx2 Matrix to translate.
+ * @return array Translated matrix.
+ */
+Matrix.translate = Matrix.add;
+
+/**
+ * Always returns a negative matrix.
+ *
+ * @param array mtx Matrix to be returned as negative
+ * @return array Negative matrix
+ */
+Matrix.negative = R.map(R.map(negative));
+
+
+
 var isPlayer = R.propEq('id', 'player');
 
 var playerIndex = R.findIndex(isPlayer);
@@ -512,17 +552,23 @@ var Default = {
 	walkSpeed: R.always( 5 )
 };
 
+var translateEntity = R.curry(function (mtx, entity) {
+	return setPos(Matrix.add(viewPos(entity), mtx), entity);
+});
+
 /**
  * Translates the position of
- * a given entity by a given matrix.
+ * a given entity by a given velocity
+ * that is converted into a matrix.
  *
+ * @param array vel An array representing a velocity by which to move.
  * @param object entity An entity to translate.
- * @param array mtx A matrix by which to translate.
  * @return object New entity with modified "pos" property.
  */
-var move = R.curry(function (mtx, entity) {
+var move = R.curry(function (vel, entity) {
+	var mtx = velocityToMatrix(2, vel);
 	entity = setPrevPos(viewPos(entity), entity);
-	return setPos(Matrix.add(viewPos(entity), mtx), entity);
+	return translateEntity(mtx, entity);
 });
 
 //var moveByVel = R.compose();
@@ -537,6 +583,28 @@ var getVelocity = R.curry(function (entity) {
 	var prevPos = viewPrevPos(entity) || Default.prevPos();
 	return R.head(Matrix.subtract(prevPos, pos));
 });
+
+/**
+ * Converts an array
+ * representing velocity into
+ * an array representing a 
+ * matrix of a given dimension.
+ *
+ * @param number n The dimension of the matrix
+ * @param array vel The velocity
+ * @return array The new matrix
+ */
+var velocityToMatrix = R.curry(function (n, vel) {
+	return R.map(R.partial(R.identity, vel), R.range(0, n));
+});
+
+/**
+ * Always returns a negative velocity.
+ *
+ * @param array vel Velocity to negate.
+ * @return array Negative velocity.
+ */
+var negativeVel = R.map(negative);
 
 /**
  * Calculates the speed 
@@ -640,7 +708,7 @@ var Impure = {
 	 * @param array entities An array of entity data objects.
 	 * @return mixed False if the game should abort, an array of altered entities if it should continue.
 	 */
-	logic: R.curry(function (canvas, entities) {
+	logic: R.curry(function (canvas, entities, delta) {
 
 		// STOP GAME ON ESC PRESS
 		if (KEY.isDown(KEY.ESC)) 
@@ -653,6 +721,7 @@ var Impure = {
 		var speed = getSpeed(velocity);
 		var acc = (speed < walkSpeed) ? 0.5 : 0;
 		var moveSpeed = speed + acc;
+		var moveVelocity = [moveSpeed,0];
 
 		console.log(walkSpeed);
 		console.log(velocity);
@@ -662,9 +731,9 @@ var Impure = {
 
 		// MOVE PLAYER TO THE RIGHT
 		if (KEY.isDown(KEY.D)) 
-			ents = setPlayer(move([[moveSpeed,0], [moveSpeed,0]], player), ents);
+			ents = setPlayer(move(moveVelocity, player), ents);
 		if (KEY.isDown(KEY.A))
-			ents = setPlayer(move([[-moveSpeed,0], [-moveSpeed,0]], player), ents);
+			ents = setPlayer(move(negativeVel(moveVelocity), player), ents);
 
 		return ents;
 	}),
@@ -715,7 +784,9 @@ var Impure = {
 	game: R.curry(function (fps, canvas, entities) {
 
 		var ents = entities;
-		var throttled = timeAccumulator(1000/fps); // throttle any given function to fps
+		var intervalTime = 1000/fps;
+		var throttled = timeAccumulator(intervalTime); // throttle any given function to fps
+		var delta = deltaTime();
 
 		// APPLY FOCUS TO CANVAS ELEMENT
 		canvas.setAttribute('tabIndex', 0);
@@ -723,17 +794,30 @@ var Impure = {
 		// SETUP CANVAS EVENT LISTENERS
 		Impure.setupEvents( canvas );
 
-		// BEGIN GAME LOOP
-		var interval = setInterval(function () {
+		/**
+		 * Recursive loop for game logic
+		 * and rendering.
+		 * Uses requestAnimationFrame
+		 * to execute recursively 
+		 * when browser is ready to 
+		 * refresh the screen.
+		 *
+		 * @return undefined
+		 */
+		var loop = function () {
+
+			if (!ents)
+				return;
+			requestAnimationFrame(loop);
 
 			// PERFORM LOGIC AND ABORT GAME WHEN FALSE RETURNED
-			ents = Impure.logic(canvas, ents);
-			// ABORT GAME LOOP IF GAME LOGIC RETURNS FALSY VALUE
-			if (!Impure.abort(interval, ents))
-				return;
-			// THROTTLE GRAPHICS RENDERING
-			throttled(Impure.graphics, canvas, ents);
-		}, 10);
+			ents = Impure.logic(canvas, ents, delta());
+			// GRAPHICS RENDERING
+			Impure.graphics(canvas, ents);
+		};
+
+		// BEGIN GAME LOOP
+		loop();
 	})
 };
 
