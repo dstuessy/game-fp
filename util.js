@@ -567,7 +567,6 @@ var translateEntity = R.curry(function (mtx, entity) {
  */
 var move = R.curry(function (vel, entity) {
 	var mtx = velocityToMatrix(2, vel);
-	console.log(mtx);
 	entity = setPrevPos(viewPos(entity), entity);
 	return translateEntity(mtx, entity);
 });
@@ -806,18 +805,15 @@ var Impure = {
 		 * @return undefined
 		 */
 		var loop = function () {
-			setTimeout(function () {
-				if (!ents)
-					return;
-				requestAnimationFrame(loop);
 
-				// PERFORM LOGIC AND ABORT GAME WHEN FALSE RETURNED
-				ents = Impure.logic(canvas, ents, delta());
-				if (!ents)
-					return;
-				// GRAPHICS RENDERING
-				Impure.graphics(canvas, ents);
-			}, intervalTime);
+			if (!ents)
+				return;
+			requestAnimationFrame(loop);
+
+			// PERFORM LOGIC AND ABORT GAME WHEN FALSE RETURNED
+			ents = Impure.logic(canvas, ents, delta());
+			// GRAPHICS RENDERING
+			Impure.graphics(canvas, ents);
 		};
 
 		// BEGIN GAME LOOP
