@@ -451,6 +451,13 @@ Matrix.multiply = R.curry(function (a, b) {
 	return R.map(R.compose(mapSum, Matrix.multRowbyCols(b)), a);
 });
 
+/**
+ * Multiplies a matrix by a scalar value.
+ *
+ * @param number a A scalar value.
+ * @param array b A matrix.
+ * @return array A new matrix mutliplied by the scalar value.
+ */
 Matrix.scalarMult = R.curry(function (a, b) {
 	return R.map(R.map(function (n) {
 		return n * a;
