@@ -14,12 +14,6 @@ document.addEventListener('DOMContentLoaded', function () {
 				[0,0],
 				[40,40]
 			],
-			/*{
-				x: 0,
-				y: 0,
-				w: 40,
-				h: 40
-			},*/
 			walkSpeed: 5,
 			color: 'green',
 			image: spriteSheet,
@@ -38,15 +32,6 @@ document.addEventListener('DOMContentLoaded', function () {
 			imgPos: [0, 40]
 		}
 	];
-
-	var transformations = {
-		id: R.identity,
-		pos: R.identity,
-		walkSpeed: R.identity,
-		color: R.identity,
-		image: R.identity,
-		imgPos: R.identity
-	};
 
 	// PLAY THE GAME!
 	Impure.game(
