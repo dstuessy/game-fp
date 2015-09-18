@@ -17,7 +17,10 @@ document.addEventListener('DOMContentLoaded', function () {
 			walkSpeed: 5,
 			color: 'green',
 			image: spriteSheet,
-			imgPos: [0, 80]
+			imgPos:{
+				"right": [0, 80],
+				"left": [0, 40]
+			} 
 		},
 		// SECOND ENTITY
 		{
@@ -29,7 +32,10 @@ document.addEventListener('DOMContentLoaded', function () {
 			walkSpeed: 5,
 			color: 'red',
 			image: spriteSheet,
-			imgPos: [0, 40]
+			imgPos:{
+				"right": [0, 80],
+				"left": [0, 40]
+			} 
 		}
 	];
 

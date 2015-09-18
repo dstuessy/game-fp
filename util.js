@@ -635,6 +635,10 @@ var getVelocity = R.curry(function (entity) {
 	return R.head(Matrix.subtract(prevPos, pos));
 });
 
+var getDirX = R.curry(function (entity) {
+	return R.head(getVelocity(entity)) < 0 ? "left" : "right";
+});
+
 var Velocity = Array;
 
 /**
@@ -687,8 +691,8 @@ var drawable = R.curry(function (ent) {
 		y: y(mtx),
 		w: width(mtx),
 		h: height(mtx),
-		sx: ent.imgPos[0],
-		sy: ent.imgPos[1],
+		sx: R.head(ent.imgPos[ getDirX(ent) ]),
+		sy: R.last(ent.imgPos[ getDirX(ent) ]),
 		sw: width(mtx),
 		sh: height(mtx),
 		color: ent.color,
