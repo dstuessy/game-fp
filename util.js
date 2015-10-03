@@ -624,7 +624,7 @@ var getVelocity = R.curry(function (entity) {
 });
 
 
-var Vector = function (rows) {
+var Vector = function (numbers) {
 	return R.apply(Array, toArray(arguments));
 };
 
