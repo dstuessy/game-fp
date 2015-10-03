@@ -154,7 +154,7 @@ var forEvery = R.curry(function (n, fn ,array) {
  *
  * @example
  * mapEvery(2, Array, [1,2,3,4,5,6])
- * //=> [[1,2,3],[4,5,6]]
+ * //=> [[1,2], [3,4], [5,6]]
  * @param number n The number by which to map.
  * @param function fn The function by which to map.
  * @param array array The array to map.
@@ -263,6 +263,16 @@ var width = R.curry(function (mtx) {
 	return mtx[1][0] - mtx[0][0];
 });
 
+/**
+ * Get X-direction of 
+ * given entity.
+ * @param object entity Entity object
+ * @return string Direction of given entity.
+ */
+var getDirX = R.curry(function (entity) {
+	return R.head(getVelocity(entity)) < 0 ? "left" : "right";
+});
+
 var add = R.curry(function (b, a) {
 	return a + b;
 });
@@ -277,13 +287,15 @@ var multiply = R.curry(function (b, a) {
 
 var pow = R.curry(flip(Math.pow));
 
+var isNegative = R.lt(0);
+
 /**
  * Always returns a negative number.
  *
  * @param number n Number to negate
  * @return number Negated number.
  */
-var negative = R.ifElse(R.lt(0), multiply(-1), R.identity);
+var negative = R.ifElse(isNegative, multiply(-1), R.identity);
 
 // SOME CURRIED UTIL FUNCTIONS FOR MATH
 var increment = incr = add(1);
@@ -353,6 +365,8 @@ var mergeBy = R.curry(function (fn, arr, arr2) {
 
 var mergeBySum = mergeBy(add);
 
+var mergeBySub = mergeBy(subtract);
+
 /**
  * Merge arrays by multiplication.
  *
@@ -409,7 +423,10 @@ var reduceArraysByConcat = R.reduce(skipNil(R.compose(mergeByConcat, Array)), nu
  * @param array row A row of the matrix.
  * @return array A new matrix, where each entry is an array representing a row of the matrix.
  */
-var Matrix = Array;
+var Matrix = function (rows) {
+	return R.apply(Array, toArray(arguments));
+};
+Matrix.prototype = Array;
 
 Matrix.I = R.curry(function (n) {
 	return R.map(function (v, i) {
@@ -585,49 +602,20 @@ var translateEntity = R.curry(function (mtx, entity) {
 	return setPos(Matrix.add(viewPos(entity), mtx), entity);
 });
 
-/**
- * Translates the position of
- * a given entity by a given velocity
- * that is converted into a matrix.
- *
- * @param array vel An array representing a velocity by which to move.
- * @param object entity An entity to translate.
- * @return object New entity with modified "pos" property.
- */
-var move = R.curry(function (vel, entity) {
-	var mtx = Velocity.toMatrix(2, vel);
-	entity = setPrevPos(viewPos(entity), entity);
+var animate = R.curry(function (acc, maxVel, entity, delta) {
+	var acc = acc;
+	var maxVel = maxVel;
+	var velocity = Vector.min(maxVel, getVelocity(entity)),
+		velocity = Vector.add(acc, velocity),
+		velocity = Vector.scalarMult(delta, velocity);
+	var mtx = Vector.toMatrix(2, velocity);
 	return translateEntity(mtx, entity);
-});
-
-/**
- * Walk an entity!
- * Performs the walking animation 
- * for an entity.
- * Accelerates them until they have 
- * reached their walkSpeed.
- *
- * @param string dir Walking direction "left" or any other value as right.
- * @param object entity Etity to be 'walked'.
- * @param number delta The delta value for the current 'tick'.
- * @return object New entity that has been 'walked'. 
- */
-var walk = R.curry(function (dir, entity, delta) {
-
-	var acc = 0.5;
-	var speed = R.min( getSpeed(getVelocity(entity)), viewWalkSpeed(entity) ); // cap speed at walkSpeed 
-	var moveSpeed = (speed + acc) * delta,
-		moveSpeed = (dir === "left") ? negative(moveSpeed) : moveSpeed;
-	var moveVelocity = [moveSpeed, 0];
-
-	// MOVE PLAYER
-	return move(moveVelocity, entity);
 });
 
 /**
  * Calculates the velocity of given entity
  * @param object entity Entity of which to calculate the velocity
- * @return array Array representing velocity as [x, y]
+ * @return array Array representing vector as [x, y]
  */
 var getVelocity = R.curry(function (entity) {
 	var pos = viewPos(entity);
@@ -635,15 +623,14 @@ var getVelocity = R.curry(function (entity) {
 	return R.head(Matrix.subtract(prevPos, pos));
 });
 
-var getDirX = R.curry(function (entity) {
-	return R.head(getVelocity(entity)) < 0 ? "left" : "right";
-});
 
-var Velocity = Array;
+var Vector = function (rows) {
+	return R.apply(Array, toArray(arguments));
+};
 
 /**
  * Converts an array
- * representing velocity into
+ * representing a vector into
  * an array representing a 
  * matrix of a given dimension.
  *
@@ -651,17 +638,108 @@ var Velocity = Array;
  * @param array vel The velocity
  * @return array The new matrix
  */
-Velocity.toMatrix = R.curry(function (n, vel) {
+Vector.toMatrix = R.curry(function (n, vel) {
 	return R.map(R.partial(R.identity, vel), R.range(0, n));
 });
 
 /**
- * Always returns a negative velocity.
+ * Always returns a negative vector.
  *
  * @param array vel Velocity to negate.
- * @return array Negative velocity.
+ * @return array Negative vector.
  */
-Velocity.negative = R.map(negative);
+Vector.negative = R.map(negative);
+
+/**
+ * Compares two or more vectors
+ * based on a comparator function.
+ * The result will be the vector
+ * that matches the absolute 
+ * of the given comparator. e.g.
+ * if the comparator is for 
+ * greater than, then the greatest
+ * vector will be returned.
+ *
+ * @example
+ * Vector.compare(R.gt, [1,2,3], [1,1,1]);
+ * //=> [1,2,3]
+ * Vector.compare(R.gt, [1,2,3], [2,2,2]);
+ * //=> [1,2,3]
+ * Vector.compare(R.gt, [2,2,2], [6,6,6]);
+ * //=> [6,6,6]
+ * @param function comparator The comparator function
+ * @param array a The first vector
+ * @param array b The second vector
+ * @return array The vector that matches the absolute of the comparator in the list of given vectors.
+ */
+Vector.compare = R.curry(function (comparator, a, b) {
+
+	var vectors = R.tail(toArray(arguments));
+
+	return R.reduce(function (previous, current) {
+		return comparator(sum(previous), sum(current)) ? previous : current;
+	}, R.head(vectors), vectors);
+});
+
+/**
+ * Returns the vector with the 
+ * lowest sum.
+ *
+ * @param array a Vector
+ * @param array b Vector
+ * @return array Vector with lowest sum
+ */
+Vector.min = Vector.compare(R.lt);
+/**
+ * Returns the vector with the 
+ * highest sum.
+ *
+ * @param array a Vector
+ * @param array b Vector
+ * @return array Vector with highest sum
+ */
+Vector.max = Vector.compare(R.gt);
+
+/**
+ * Adds two vectors 
+ * together.
+ *
+ * @param array a Vector to add.
+ * @param array b Vector to add.
+ * @return array Vector as the sum of the given vectors.
+ */
+Vector.add = mergeBy(add);
+
+/**
+ * Subtracts a vector 
+ * from another one.
+ *
+ * @param array a Vector to subtract.
+ * @param array b Vector from which to subtract.
+ * @return array Vector as the result from subtracting the given vectors.
+ */
+Vector.subtract = mergeBy(subtract);
+
+/**
+ * Multiplies two vectors.
+ *
+ * @param array a Vector to multiply.
+ * @param array b Vector to multiply.
+ * @return array Vector as the result from multiplying the given vectors.
+ */
+Vector.multiply = mergeBy(multiply);
+
+/**
+ * Multiplies a vector
+ * by a scalar value.
+ *
+ * @param number scalar Scalar value.
+ * @param array vector Vector to multiply.
+ * @return array Vector multiplied by vector.
+ */
+Vector.scalarMult = R.curry(function (scalar, vector) {
+	return R.map(multiply(scalar), vector);
+});
 
 /**
  * Calculates the speed 
@@ -669,9 +747,9 @@ Velocity.negative = R.map(negative);
  * Uses pythagoras a²+b²=c²
  *
  * @param array vel Velocity to convert to speed
- * @return number Speed of velocity.
+ * @return number Speed of vector.
  */
-var getSpeed = R.curry(function (vel) {
+Vector.getSpeed = R.curry(function (vel) {
 	var x = R.head(vel);
 	var y = R.last(vel);
 	return Math.sqrt(squared(x) + squared(y));
@@ -685,7 +763,7 @@ var getSpeed = R.curry(function (vel) {
  * @return object New object with entity's data in a drawable format.
  */
 var drawable = R.curry(function (ent) {
-	var mtx = ent.pos;
+	var mtx = viewPos(ent);
 	return {
 		x: x(mtx),
 		y: y(mtx),
@@ -696,7 +774,7 @@ var drawable = R.curry(function (ent) {
 		sw: width(mtx),
 		sh: height(mtx),
 		color: ent.color,
-		image: ent.image,
+		image: ent.image
 	};
 });
 
@@ -782,10 +860,10 @@ var Impure = {
 		}, ents);
 
 		// MOVE PLAYER TO THE RIGHT
-		if (KEY.isDown(KEY.D)) 
-			ents = setPlayer(walk("right", player, delta), ents);//ents = setPlayer(move(moveVelocity, player), ents);
+		if (KEY.isDown(KEY.D))
+			ents = setPlayer(animate(Vector(0.5, 0), Vector(viewWalkSpeed(player), 0), player, delta), ents);
 		if (KEY.isDown(KEY.A))
-			ents = setPlayer(walk("left", player, delta), ents);//ents = setPlayer(move(Velocity.negative(moveVelocity), player), ents);
+			ents = setPlayer(animate(Vector(-0.5, 0), Vector(viewWalkSpeed(player), 0), player, delta), ents);
 
 		return ents;
 	}),
